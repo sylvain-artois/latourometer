@@ -1,0 +1,121 @@
+# Latouromètre seeds — four attractors from Bruno Latour, Où atterrir? (2017).
+#
+# v4 (2026-06-11) — extended against the 39-text corpus (PRD 2, Part 2).
+# v3 generalised to 34/39 (0.872 [0.769, 0.974]) on the extended corpus; the
+# new failures split into two register gaps that seeds can close and three
+# Pattern-D / stance-inverted cases left to the NLI stance head:
+#   - hors_sol: productivist-corporate energy register (Pouyanné/TotalEnergies
+#     2025). Distinct from the climate-skeptic Raymond/Exxon line below — here
+#     the energy transition is rhetorically accepted but reframed as corporate
+#     growth, investment and global energy demand. Grounded in the log-odds
+#     hors_sol n-grams "milliard dollar", "combustible fossile", "niveau vie".
+#   - local: agricultural-protectionist / souverainiste register (Brunel 2021,
+#     "Sauvons nos paysans"). The terrestre "paysan" seeds capture the word in
+#     an ecological frame; this line anchors the defensive-national framing
+#     (food sovereignty, unfair competition) without ecology.
+# NOT chased with seeds (documented Pattern-D ceiling, would overfit):
+#   Karp (cosine peaks hors_sol, global stance flips it), Bruckner (anti-Greta
+#   stance inversion), Damasio (writes ABOUT techno-capitalism to oppose it).
+# Methodology and iteration history in
+# words-weight/docs/building_latourometre.md (section "Calibration v4").
+#
+# v3 (2026-05-01) — extended against a 21-text labelled corpus to cover the
+# two sub-poles missed by v2:
+#   - hors_sol: techno-imperial register (Karp/Palantir 2026), distinct from
+#     the Andreessen-faith / Thiel-libertarian / Srinivasan-network registers
+#     already covered in v2.
+#   - local: souverainiste-républicain 2004 register (Devilliers/MPF 2004),
+#     distinct from the RN/Zemmour register of v2.
+#
+# v2 (2026-04-24) — calibrated against the original 17-text labelled corpus.
+# Validation run: run_003_20260424_seeds-hybrid-v2 — 17/17 accuracy.
+#
+# Key order matters: the LatouromètreChart reads this dict in order and maps
+# the four poles to the cardinal angles of the polar chart (top, right,
+# bottom, left) to reproduce Latour's Figure 4 geometry. Do not reorder
+# without also updating the chart layout assumptions (EXPECTED_POLE_ORDER).
+
+poles:
+  terrestre:
+    label: "Terrestre"
+    seeds:
+      - "atterrir, zone critique, cohabiter avec le vivant"
+      - "réaction de la Terre, système-terre, Anthropocène"
+      - "géohistoire, Nouveau Régime Climatique, acteur-politique"
+      - "composer avec les non-humains, attachements multiples, sensibilité écologique"
+      - "conditions matérielles d'existence, dépendances, interdépendances"
+      - "paysans, lutte écologique, habiter la Terre"
+      - "paysan, destruction écologique, appel collectif, situation d'urgence"
+
+  global:
+    label: "Global"
+    seeds:
+      - "mondialisation, marché mondial, flux de capitaux, libre-échange"
+      - "progrès, modernisation, développement, émancipation universelle"
+      - "universalisme, horizon commun, flèche du temps lancée vers l'avenir"
+      - "multilatéralisme, coopération internationale, institutions mondiales"
+      - "Europe souveraine, union européenne, solidarité internationale"
+      - "nous devons construire ensemble, ambition collective, réforme mondiale"
+
+  hors_sol:
+    label: "Hors-Sol"
+    seeds:
+      # Andreessen register: techno-faith litany, growth as absolute good
+      - "nous croyons en la technologie comme voie du progrès, nous croyons en la croissance illimitée"
+      - "nous croyons en l'intelligence artificielle, nous croyons en l'énergie, nous croyons en l'avenir"
+      # Srinivasan: network state, cloud sovereignty, exit from nation-state
+      - "réseau souverain, état-réseau, communauté en ligne, cloud d'abord territoire ensuite"
+      - "exit strategy, sécession numérique, réseau sans frontières, startup society"
+      # Thiel: liberty vs democracy, friend/enemy, capitalist escape
+      - "la liberté et la démocratie sont incompatibles, capitalisme libertarien, ennemi politique"
+      # Raymond: fossil energy, economic growth, climate skepticism
+      - "industrie pétrolière, énergie fossile, croissance économique, réchauffement climatique prétendu"
+      # shared: individual optimization, escape from collective constraints
+      - "optimisation fiscale, dérégulation, marché libre, individu souverain, fuite collective"
+      # v3: Karp/Palantir techno-imperial register — tech-sovereignty-as-power,
+      # supériorité par les machines et les logiciels, élite ingénieure
+      # "obligée" envers la nation. Distinct des registres exit/libertarien de
+      # Thiel/Andreessen/Srinivasan (qui fuient l'État) — Karp veut au
+      # contraire FUSIONNER tech et État pour dominer.
+      - "république technologique, prééminence technologique, supériorité militaire par les logiciels, hard power logiciel"
+      - "obligation positive de l'élite ingénieure, classe dirigeante technologique, machines au service de la domination"
+      # v4: Pouyanné/TotalEnergies 2025 productivist-corporate energy register.
+      # The transition is accepted rhetorically but reframed as investment,
+      # corporate growth and global energy demand — extraction-as-business,
+      # distinct from the climate-skeptic Raymond/Exxon line above.
+      - "milliards d'investissement, demande mondiale d'énergie, production de pétrole et de gaz, croissance des dividendes"
+      - "transition énergétique rentable, performance économique, marchés mondiaux de l'énergie, retour sur capital"
+
+  local:
+    label: "Local"
+    seeds:
+      # Nationalist core (attested by log-odds: france, français, national)
+      - "identité nationale, frontières étanches, souche, autochtone"
+      - "protection du terroir, racines, tradition réinventée, patrimoine"
+      - "repli, retour au pays, sang et sol, préférence nationale"
+      - "grand remplacement, civilisation menacée, étranger, envahisseur"
+      - "la France d'abord, français de souche, immigration, Macron"
+      # Local+ / solidarist extension (to recover Ruffin and similar)
+      - "protéger nos emplois, défense du travail local, solidarité de proximité"
+      - "travailleurs de ce pays, combat des ouvriers, défense des services publics locaux"
+      # Anti-globalist / anti-EU register from the nationalist right
+      # (Le Pen 2022 "Nations d'Europe" vs. global "Europe souveraine")
+      - "mondialisme, immigrationnisme, wokisme, nations d'Europe, retour des nations"
+      - "Union européenne impériale, vague patriote, pouvoir mondialiste, souverainisme"
+      # v3: Devilliers/MPF 2004 souverainiste-républicain register — anti-EU
+      # from a republican-conservative tradition (pre-RN). Founded on
+      # "souveraineté nationale" as a republican value, distinct both from
+      # the RN/Zemmour identity/ethnic register above AND from the global
+      # "Europe souveraine" seed. Avoid mentioning "Europe" or "Constitution"
+      # here — those terms are too contested between Local and Global.
+      - "souveraineté nationale, valeurs républicaines, France éternelle, patrie une et indivisible"
+      - "MPF Mouvement pour la France, peuple souverain, indépendance nationale, refus de l'effacement"
+      # v3.2: Devilliers-specific phrasing — religious-republican fusion,
+      # filiation Jaurès/Péguy, refus du fédéralisme supranational. These are
+      # the kind of formulations that don't appear in Global texts.
+      - "Jaurès la patrie le bien de ceux qui n'ont rien, droit du peuple à disposer de lui-même, refus du fédéralisme supranational, l'âme de la France"
+      # v4: Brunel 2021 "Sauvons nos paysans" — agricultural-protectionist /
+      # souverainiste register. Anchors the defensive-national framing of
+      # farming (food sovereignty, unfair competition) so "paysan" is not
+      # captured purely by the terrestre ecological seeds.
+      - "défense des agriculteurs français, souveraineté alimentaire nationale, protéger nos paysans de la concurrence déloyale, agriculture française menacée"

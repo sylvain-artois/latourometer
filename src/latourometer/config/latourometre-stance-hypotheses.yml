@@ -1,0 +1,117 @@
+# Latouromètre stance hypotheses — zero-shot NLI candidate labels per pole.
+#
+# Phase D (cf. words-weight/docs/building_latourometre.md, "Plan C1"):
+# the cosine-only Latouromètre cannot tell apart "this text endorses
+# pole P" from "this text uses P's lexicon to attack P". A zero-shot
+# NLI head (cmarkea/distilcamembert-base-nli, FR-only in v1) scores
+# each chunk against pro / contra hypotheses below; the per-pole
+# stance ∈ [-1, +1] is then blended with the cosine projection.
+#
+# Authorship principle — IMPORTANT:
+# Hypotheses target *generic families of rhetorical inversion*, NOT
+# specific authors. Bruckner, Butré, Devilliers and Karp are diagnostic
+# probes — they tell us whether the hypotheses fire on real-world
+# inversions — they are not templates. A hypothesis like "the text
+# describes climate mobilization as infantile" would over-fit Bruckner;
+# "the text dismisses climate mobilization as propaganda or
+# manipulation" generalizes to climate-skeptic, anti-Green-deal,
+# greenwashing-debunking and budget-pragmatist registers all at once.
+# Each contra hypothesis should fire on multiple distinct authors that
+# share the inversion family, not on a single text.
+#
+# Same key-order convention as latourometre-seeds.yml: terrestre →
+# global → hors_sol → local maps to the cardinal angles of the polar
+# chart (top, right, bottom, left).
+#
+# v0 (2026-05-01) — initial draft, derived from PRD §3 and refined for
+# genericity.
+# v0.1 (2026-05-01) — after smoke test on 8 corpus texts. Signs were
+# directionally correct on Pattern-D traps (Bruckner T=-0.172, Butré
+# T=-0.285) but amplitude too weak.
+#
+# v0.2 (2026-05-01) — second iteration after smoke v0.1.
+#
+# v0.3 (2026-05-01) — narrowed local.hypotheses_pro toward the anti-
+# globalist / anti-EU register (the actual Latour Local pole, opposite
+# Global) so Karp / Andreessen / Morel-Darleux Local stance dropped
+# from +0.20 region to +0.04-0.14 without losing Le Pen or Devilliers.
+#
+# v0.4 (2026-05-02) — TESTED, REVERTED. Added 2 HS pro lines for
+# tech-State-military fusion targeting Karp's specific register.
+# Smoke result: Karp HS lift +0.018 only (0.065 → 0.083) — not enough
+# to overcome G in the blend at α=0.4 (HS = 0.477 vs G = 0.480).
+#
+# v0.5 (2026-05-02) — TESTED, REVERTED. Added 2 more HS pro lines
+# with verbatim Karp phrasings ("obligation positive de l'élite
+# ingénieure", "suprématie technologique d'une nation hégémonique").
+# Smoke: additional Karp HS lift +0.004 only (0.083 → 0.087). Same
+# blend outcome — Karp regresses at α=0.4.
+#
+# Diagnosis: NLI heads with `multi_label=True` give moderate scores
+# (0.3–0.6) for implicit entailment, and `max` aggregation across
+# similar hypotheses flattens out — adding more pro lines targeting
+# the same semantic field doesn't lift max appreciably. Karp's HS is
+# implicit (he doesn't *say* "I serve tech-imperial state", he *is*
+# that text). NLI structurally underrepresents this.
+#
+# Decision: ship v0.3. The Karp regression at α=0.4 is documented as
+# a labelling-vs-stance artifact (cf. Latour brief on Trump-HS as
+# fusion of fuite-en-avant techno + fuite-en-arrière nationale —
+# Karp is the techno-imperial branch of HS that genuinely activates
+# both HS and L stance hypotheses, so single-winner classification
+# legitimately disagrees with the corpus label).
+# Iterations tracked in building_latourometre.md and in
+# docs/phase-d-grid-search-results.md.
+
+poles:
+  terrestre:
+    label: "Terrestre"
+    hypotheses_pro:
+      - "Ce texte appelle à habiter la Terre et à composer avec le vivant face au dérèglement climatique."
+      - "Ce texte se reconnaît dans les luttes écologiques territoriales, les ZAD ou les soulèvements de la Terre."
+      - "Ce texte appelle à défendre le vivant et les écosystèmes contre l'extractivisme et la destruction."
+    hypotheses_contra:
+      - "Ce texte présente la mobilisation écologique comme une propagande, une idéologie ou une manipulation."
+      - "Ce texte qualifie le discours écologique de propagande, d'endoctrinement ou de chantage moral."
+      - "Ce texte ridiculise ou disqualifie les militants écologistes et les défenseurs du climat."
+      - "Ce texte minimise ou nie l'urgence écologique et la réalité du changement climatique anthropique."
+      - "Ce texte traite la transition écologique comme une variable d'ajustement budgétaire ou un coût excessif."
+      - "Ce texte mobilise un vocabulaire écologique pour s'opposer à des projets de transition énergétique ou d'infrastructures renouvelables."
+      - "Ce texte présente les infrastructures renouvelables comme une destruction du patrimoine, du paysage ou de la faune."
+
+  global:
+    label: "Global"
+    hypotheses_pro:
+      - "Ce texte défend la mondialisation, le multilatéralisme et la coopération internationale."
+      - "Ce texte se reconnaît dans le projet européen ouvert et dans une ambition collective universaliste."
+      - "Ce texte appelle à construire ensemble des institutions communes au-delà des frontières."
+    hypotheses_contra:
+      - "Ce texte rejette les institutions internationales comme illégitimes ou inefficaces."
+      - "Ce texte plaide pour la sortie de l'Union européenne ou des accords multilatéraux."
+      - "Ce texte présente la mondialisation comme une dépossession des peuples."
+
+  hors_sol:
+    label: "Hors-Sol"
+    hypotheses_pro:
+      - "Ce texte affirme une foi inconditionnelle dans la technologie, la croissance et le marché libre."
+      - "Ce texte célèbre la croissance technologique illimitée comme destin du progrès humain."
+      - "Ce texte défend l'évasion hors des contraintes terrestres, fiscales ou démocratiques."
+      - "Ce texte présente l'élite technologique ou militaire comme investie d'une mission supérieure."
+      - "Ce texte minimise ou nie le réchauffement climatique anthropique."
+    hypotheses_contra:
+      - "Ce texte critique le techno-solutionnisme et la fuite en avant numérique."
+      - "Ce texte appelle à réguler les marchés financiers, les paradis fiscaux ou les ultra-riches."
+      - "Ce texte dénonce l'évasion d'une élite hors du monde commun."
+
+  local:
+    label: "Local"
+    hypotheses_pro:
+      - "Ce texte défend la fermeture des frontières et la limitation de l'immigration."
+      - "Ce texte rejette la mondialisation, le mondialisme ou l'effacement des nations."
+      - "Ce texte défend l'identité française ou européenne contre une menace migratoire ou culturelle."
+      - "Ce texte refuse le fédéralisme supranational et l'effacement de la souveraineté nationale."
+      - "Ce texte affirme que le peuple souverain doit décider de son destin contre les élites mondialisées."
+    hypotheses_contra:
+      - "Ce texte célèbre la diversité, le métissage et l'ouverture aux autres cultures."
+      - "Ce texte défend l'accueil des migrants et le dépassement des frontières nationales."
+      - "Ce texte présente l'intégration supranationale comme un horizon désirable."

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+# Benchmark outputs (regenerated from the fixture corpus).
+/out/
+*.parquet
