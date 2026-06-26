@@ -8,15 +8,16 @@ Latouromètre calibration corpus (``corpus_latourometre/``) and writes a
          with ref_score(hors_sol) = -1, ref_score(terrestre) = +1
 
 This is a CPU-only lexical baseline -- counting + spaCy lemmatization, no
-embeddings, no NLI. The corpus on-disk format is owned by ``_corpus_loader``
-(mounted read-only from words-weight); this module only counts and scores.
+embeddings, no NLI. The corpus on-disk format is owned by ``_corpus_loader``;
+this module only counts and scores.
 
-Usage (inside the corpus-builder container):
+Usage:
 
-    python -m corpus_builder.calibrate --axis hors-sol-terrestre \\
+    python -m latourometer.baselines.calibrate --axis hors-sol-terrestre \\
         [--dry-run] [--min-docs-per-pole 5] [--bootstrap-n 500]
 
-Outputs (under CORPUS_BASE_PATH, default /data/corpus):
+Point ``CORPUS_BASE_PATH`` at a corpus checkout (it expects a
+``corpus_latourometre/`` subdir). Outputs (under CORPUS_BASE_PATH):
 
     axes/hors-sol-terrestre/lexicon.csv      -- canonical, human-readable
     axes/hors-sol-terrestre/lexicon.parquet  -- for the Hugging Face viewer
@@ -44,11 +45,10 @@ import numpy as np
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-# Imported from the read-only words-weight scripts mount (see compose.yml /
-# PYTHONPATH). It is the single source of truth for the on-disk corpus format
-# AND for the audit-flag selection (Phase 0 anti-circularity wiring): seed_pool
-# returns only ``audit.use_for_seeds: true`` texts, role_of/ROLE_INVERSION_HOLD
-# identify the held-out inversions. No selection logic is duplicated here.
+# The single source of truth for the on-disk corpus format AND for the
+# audit-flag selection (anti-circularity wiring): seed_pool returns only
+# ``audit.use_for_seeds: true`` texts, role_of/ROLE_INVERSION_HOLD identify the
+# held-out inversions. No selection logic is duplicated here.
 from ._corpus_loader import (
     ROLE_INVERSION_HOLD,
     load_corpus,
@@ -58,7 +58,7 @@ from ._corpus_loader import (
 
 from .schema import LexiconRow
 
-logger = logging.getLogger("corpus_builder.calibrate")
+logger = logging.getLogger("latourometer.baselines.calibrate")
 
 # Supported axes -> the ordered (minus_pole, plus_pole) keys that feed the
 # calibration. Two of Latour's perpendicular vectors are calibrated independently:
@@ -126,7 +126,7 @@ def output_dir(axis: str) -> Path:
 
 
 def _load_spacy():
-    """Load spaCy directly (do not import latour_logodds -- it pulls src.*)."""
+    """Load the French spaCy pipeline used to lemmatize the corpus."""
     import spacy
 
     return spacy.load(_SPACY_MODEL)
@@ -135,8 +135,8 @@ def _load_spacy():
 def lemmatize(nlp, text: str) -> List[TokenKey]:
     """Lemmatize, lowercase, keep content POS, drop stopwords/punct/len<2.
 
-    Mirrors ``latour_logodds._lemmatize_text`` plus a POS filter; re-implemented
-    here so corpus-builder does not depend on the words-weight runtime.
+    Content-POS lemmatization (no embeddings, no NLI) — the lexical baseline's
+    only preprocessing step.
     """
     doc = nlp(text)
     tokens: List[TokenKey] = []

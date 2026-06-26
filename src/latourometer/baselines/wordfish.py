@@ -14,10 +14,10 @@ intercept, ``beta_j`` the word's discrimination on the latent axis, and
 **alternating Newton-Raphson** (the word block and the document block are each a
 2-parameter Poisson regression), pure NumPy, CPU-only — no R, no GPU.
 
-This module mirrors ``corpus_builder.compare`` (the Wordscores baseline): same
-spaCy model + lemmatizer (so the document-feature matrix is built exactly like
-the lexicon was), same corpus + ``audit:`` loading via ``_corpus_loader``, same
-two-axis gold convention. Only the *scaling model* differs.
+This module mirrors ``compare`` (the Wordscores baseline): same spaCy model +
+lemmatizer (so the document-feature matrix is built exactly like the lexicon
+was), same corpus + ``audit:`` loading via ``_corpus_loader``, same two-axis
+gold convention. Only the *scaling model* differs.
 
 Wordfish is **1-D by design**; the Latouromètre is 4-pole. We fit it **twice**
 (once per axis: Hors-Sol↔Terrestre and Local↔Global), then fold the two
@@ -27,9 +27,9 @@ sign is unidentified in Wordfish; we fix it **deterministically** by orienting
 each fitted axis so the mean position of its plus-pole seeds exceeds that of its
 minus-pole seeds (uses gold labels for *sign only*, never for the fit).
 
-Usage (inside the corpus-builder container):
+Usage:
 
-    python -m corpus_builder.wordfish [--min-doc-freq 2] [--dry-run]
+    python -m latourometer.baselines.wordfish [--min-doc-freq 5] [--dry-run]
 
 Outputs under ``CORPUS_BASE_PATH`` (default /data/corpus):
 
@@ -39,8 +39,6 @@ Outputs under ``CORPUS_BASE_PATH`` (default /data/corpus):
         wordfish-report.md           -- per-axis accuracy + inversion breakdown
     calibration_latourometre/baselines_20260625/comparison.{csv,md}
         -- shared table; this run adds/refreshes the ``wordfish_pred`` column
-
-See ``project-management/prds/9_latourometer-wordfish-baseline.md``.
 """
 
 from __future__ import annotations
@@ -57,8 +55,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-# Read-only words-weight scripts mount (see compose.yml / PYTHONPATH). Single
-# source of truth for the on-disk corpus format AND the audit-flag selection.
+# Single source of truth for the on-disk corpus format AND the audit-flag
+# selection.
 from ._corpus_loader import (
     ROLE_INVERSION_HOLD,
     audit_block,
@@ -78,7 +76,7 @@ from .calibrate import (
     lemmatize,
 )
 
-logger = logging.getLogger("corpus_builder.wordfish")
+logger = logging.getLogger("latourometer.baselines.wordfish")
 
 # The two axes, in the order the 2-D summary lists them.
 _AXIS_HS_T = "hors-sol-terrestre"
@@ -694,8 +692,6 @@ IRT, pure NumPy, CPU). Two independent 1-D fits — Hors-Sol↔Terrestre and
 Local↔Global — folded to a pole by the larger |θ|, signed (the same quadrant
 rule the Wordscores baseline uses). The axis sign is fixed deterministically by
 orienting each fit so its plus-pole seeds sit at θ > 0.
-
-> See [`9_latourometer-wordfish-baseline.md`](../../../../../../project-management/prds/9_latourometer-wordfish-baseline.md).
 
 ## Fit summary
 

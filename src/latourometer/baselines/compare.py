@@ -24,12 +24,13 @@ It scores four buckets and writes a CSV + a short markdown report:
                       control: the lexicon should recognize its own source text.
                       Only the *score* is emitted -- never the prose.
 
-This module never calls the words-weight runtime: the production figures are
-read statically from the docs. A live re-score would be a follow-up.
+This module never loads an embedder or NLI head: the production cosine+NLI
+figures it contrasts against are read statically from the report text. A live
+re-score (via ``latourometer.score``) would be a follow-up.
 
-Usage (inside the corpus-builder container):
+Usage:
 
-    python -m corpus_builder.compare --axis hors-sol-terrestre [--dry-run] \\
+    python -m latourometer.baselines.compare --axis hors-sol-terrestre [--dry-run] \\
         [--lexicon <path>] [--tests-dir <path>] [--oracle-path <path>]
 """
 
@@ -47,9 +48,8 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-# Reused from the read-only words-weight scripts mount (single source of truth
-# for the on-disk corpus format AND the audit-flag selection) -- see compose.yml
-# / PYTHONPATH. seed_pool / role_of / ROLE_INVERSION_HOLD bucket the corpus by
+# Single source of truth for the on-disk corpus format AND the audit-flag
+# selection. seed_pool / role_of / ROLE_INVERSION_HOLD bucket the corpus by
 # audit role so no sub_pole/attracteur selection is duplicated here.
 from ._corpus_loader import (
     ROLE_INVERSION_HOLD,
@@ -71,7 +71,7 @@ from .calibrate import (
     output_dir,
 )
 
-logger = logging.getLogger("corpus_builder.compare")
+logger = logging.getLogger("latourometer.baselines.compare")
 
 # The four inversion-stance texts and the pole each author actually argues for,
 # projected onto the Hors-Sol <-> Terrestre axis. Read from the frontmatter
@@ -104,7 +104,7 @@ _TEXT_BOOTSTRAP_PCT = (2.5, 97.5)
 _LOWE_ALPHA = 0.5
 
 # Reference doc for the production figures cited in the report.
-_PROD_DOC = "editorial-pipelines/words-weight/docs/building_latourometre.md"
+_PROD_DOC = "the Latouromètre calibration write-up"
 
 
 @dataclass
@@ -739,8 +739,8 @@ On-axis texts where exactly one method is right:
 
     return f"""# Wordscores — {minus_d} ↔ {plus_d} axis (data report)
 
-> Axis-neutral, numbers-only report. Interpretation lives in the PRD
-> (`project-management/prds/3_latourometer-corpus-builder-wordscores-latour.md`).
+> Axis-neutral, numbers-only report. Method + interpretation: see the project
+> README and the Latouromètre write-up.
 
 {_scoring_banner(scoring)}
 
@@ -912,7 +912,7 @@ def compare(
     if not lexicon_path.exists():
         print(
             f"ERROR: lexicon not found at {lexicon_path}. Run "
-            f"`python -m corpus_builder.calibrate --axis {axis}` first.",
+            f"`python -m latourometer.baselines.calibrate --axis {axis}` first.",
             file=sys.stderr,
         )
         return 1
