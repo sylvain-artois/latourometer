@@ -19,6 +19,7 @@ This module is the shared geometry backbone: ``LatouromètreMetric`` and
 ``LatourStanceMetric`` import ``_cosine`` / ``_softmax_aggregate`` / ``_chunk_doc``
 from here so the two metrics chunk and project text identically.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -68,7 +69,7 @@ def _softmax_aggregate(
         return {key: 0.0 for key in theme_keys}
 
     tv = np.asarray(theme_vectors)  # (T, D)
-    ce = np.asarray(chunk_embs)     # (C, D)
+    ce = np.asarray(chunk_embs)  # (C, D)
     tv_norms = np.linalg.norm(tv, axis=1)
     ce_norms = np.linalg.norm(ce, axis=1)
     safe_tv = np.where(tv_norms == 0, 1.0, tv_norms)

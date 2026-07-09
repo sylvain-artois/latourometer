@@ -5,6 +5,7 @@
 The first call downloads / loads the CamemBERT embedder and the distilCamemBERT
 NLI head (a few hundred MB, cached afterwards), so it takes a minute cold.
 """
+
 from latourometer import score
 
 TEXTS = {

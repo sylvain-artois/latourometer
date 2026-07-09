@@ -55,7 +55,6 @@ from ._corpus_loader import (
     role_of,
     seed_pool,
 )
-
 from .schema import LexiconRow
 
 logger = logging.getLogger("latourometer.baselines.calibrate")
@@ -90,6 +89,7 @@ _SPACY_MODEL = "fr_core_news_lg"
 _BOOTSTRAP_PCT = (2.5, 97.5)  # 95% percentile CI
 _MIN_DOCS_FOR_CI = 3  # below this, the CI is undefined (null)
 _BOOTSTRAP_SEED = 12345  # fixed so re-runs on a fixed corpus reproduce the CIs
+
 
 def _parquet_schema(poles: Tuple[str, ...]) -> pa.Schema:
     """Explicit Parquet schema with axis-specific frequency column names.
@@ -262,8 +262,8 @@ def load_axis_corpus(axis: str) -> Tuple[List[dict], List[str]]:
 def lemmatize_corpus(nlp, entries: List[dict]) -> List[dict]:
     """Lemmatize each entry once, caching per-document token counts.
 
-    Returns a list of ``{slug, pole, counts}`` -- the cache STORY-184 resamples
-    over without re-running spaCy.
+    Returns a list of ``{slug, pole, counts}`` -- the cache the bootstrap
+    resamples over without re-running spaCy.
     """
     doc_counts: List[dict] = []
     for entry in entries:
@@ -302,7 +302,7 @@ def build_rows(
     cis = cis or {}
     minus_pole, plus_pole = poles
     rows: List[LexiconRow] = []
-    for (lemma, pos) in sorted(scores):
+    for lemma, pos in sorted(scores):
         key = (lemma, pos)
         ci = cis.get(key)
         rows.append(
@@ -326,7 +326,9 @@ def _output_columns(poles: Tuple[str, ...]) -> Tuple[str, str]:
 
 
 def write_lexicon(
-    rows: List[LexiconRow], axis: str, poles: Tuple[str, ...] = ("hors_sol", "terrestre")
+    rows: List[LexiconRow],
+    axis: str,
+    poles: Tuple[str, ...] = ("hors_sol", "terrestre"),
 ) -> Tuple[Path, Path]:
     out_dir = output_dir(axis)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -336,7 +338,16 @@ def write_lexicon(
     minus_col, plus_col = _output_columns(poles)
     # Map the model's generic freq_minus / freq_plus onto axis-specific headers
     # (freq_hors_sol / freq_local …) so each lexicon names its own poles.
-    fieldnames = ["word", "pos", "score", minus_col, plus_col, "n_docs", "ci_low", "ci_high"]
+    fieldnames = [
+        "word",
+        "pos",
+        "score",
+        minus_col,
+        plus_col,
+        "n_docs",
+        "ci_low",
+        "ci_high",
+    ]
 
     def _record(row: LexiconRow) -> dict:
         d = row.model_dump()
@@ -386,9 +397,14 @@ def calibrate(
 
     kept, excluded = load_axis_corpus(axis)
     if excluded:
-        logger.info("Excluded %d INVERSION-HOLD text(s): %s", len(excluded), sorted(excluded))
+        logger.info(
+            "Excluded %d INVERSION-HOLD text(s): %s", len(excluded), sorted(excluded)
+        )
     if not kept:
-        print(f"ERROR: no on-axis texts found for {axis!r} in {corpus_dir()}", file=sys.stderr)
+        print(
+            f"ERROR: no on-axis texts found for {axis!r} in {corpus_dir()}",
+            file=sys.stderr,
+        )
         return 1
 
     logger.info("Lemmatizing %d on-axis text(s)…", len(kept))
@@ -414,7 +430,9 @@ def calibrate(
     cis: Dict[TokenKey, Tuple[float, float]] = {}
     if bootstrap_n and not dry_run:
         logger.info("Bootstrapping %d resamples (Lowe 2008)…", bootstrap_n)
-        cis = bootstrap_cis(doc_counts, poles, doc_freq, bootstrap_n, ref_score=ref_score)
+        cis = bootstrap_cis(
+            doc_counts, poles, doc_freq, bootstrap_n, ref_score=ref_score
+        )
 
     rows = build_rows(scores, pole_counts, doc_freq, cis, poles)
 
@@ -427,7 +445,9 @@ def calibrate(
     if dry_run:
         print(f"  bootstrap:       skipped (dry-run); --bootstrap-n {bootstrap_n}")
     elif bootstrap_n:
-        print(f"  lemmas with CI:  {sum(1 for r in rows if r.ci_low is not None)} (bootstrap-n {bootstrap_n})")
+        print(
+            f"  lemmas with CI:  {sum(1 for r in rows if r.ci_low is not None)} (bootstrap-n {bootstrap_n})"
+        )
     else:
         print("  bootstrap:       skipped (--bootstrap-n 0); CIs null")
 

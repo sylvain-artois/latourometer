@@ -9,13 +9,11 @@ Places a French political text on Bruno Latour's two attractor axes
             |
         Hors-Sol (bottom)
 
-It reproduces the AFK ``words-weight`` production scoring without any of the
-pipeline machinery (no Redis, no Postgres, no transcript payload): segment the
-text exactly as prod segments one transcript answer, run the NLI stance metric,
-then the cosine SemAxis projection blended with that stance (additive-γ, γ=1.0
-— the PRD-6 calibrated default).
+It runs the full scoring in-process, with no server runtime behind it: segment
+the text, run the NLI stance metric, then the cosine SemAxis projection blended
+with that stance (additive-γ, γ=1.0 — the calibrated default).
 
-The return value mirrors the production ``metrics.json`` ``latourometre`` block:
+The return value is the ``latourometre`` metric block:
 
     {
       "scores":        {pole: blended_score},   # the four-pole result
@@ -28,6 +26,7 @@ The return value mirrors the production ``metrics.json`` ``latourometre`` block:
       "stance":        {...},                   # full stance metric payload
     }
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional
@@ -37,10 +36,13 @@ from .metrics.latour_stance import LatourStanceMetric
 from .metrics.latourometre import LatourometreMetric
 from .runtime import get_embedder, get_nli_pipeline, get_spacy_nlp, project_root
 
-# Calibrated production config (PRD-4 embedder, PRD-6 seeds v4 + γ=1.0 blend).
+# Calibrated defaults: seeds v4 + γ=1.0 blend, τ=0.03 per-chunk softmax (the
+# "sharper winner-take-all" calibration; the metric's own fallback default is
+# 0.05).
 _SEEDS_FILE = "config/latourometre-seeds.yml"
 _HYPOTHESES_FILE = "config/latourometre-stance-hypotheses.yml"
 _DEFAULT_GAMMA = 1.0
+_DEFAULT_SOFTMAX_TAU = 0.03
 
 
 def score(
@@ -48,7 +50,7 @@ def score(
     *,
     gamma: float = _DEFAULT_GAMMA,
     use_stance: bool = True,
-    softmax_tau: Optional[float] = None,
+    softmax_tau: Optional[float] = _DEFAULT_SOFTMAX_TAU,
 ) -> Dict[str, Any]:
     """Score one French text on Latour's four attractors.
 
@@ -58,11 +60,12 @@ def score(
             0.0 collapses to the pure cosine SemAxis projection).
         use_stance: when False, skip the NLI stance layer entirely and return the
             pure cosine projection (faster — no NLI model load).
-        softmax_tau: optional override of the per-chunk softmax temperature.
+        softmax_tau: per-chunk softmax temperature (τ=0.03 is the calibrated
+            default; ``None`` falls back to the metric's own 0.05).
 
     Returns:
-        A dict mirroring the production ``latourometre`` metric block, plus a
-        convenience ``dominant_pole`` key (the argmax of ``scores``).
+        A dict holding the ``latourometre`` metric block, plus a convenience
+        ``dominant_pole`` key (the argmax of ``scores``).
     """
     nlp = get_spacy_nlp()
     segments, _strategy = _segment_answer(nlp, text or "")
@@ -77,9 +80,7 @@ def score(
     )
 
     if use_stance:
-        stance = LatourStanceMetric(
-            {"hypotheses_file": _HYPOTHESES_FILE}
-        ).compute(ctx)
+        stance = LatourStanceMetric({"hypotheses_file": _HYPOTHESES_FILE}).compute(ctx)
         ctx.metrics_so_far["latour_stance"] = stance
     else:
         stance = None

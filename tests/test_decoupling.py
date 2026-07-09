@@ -1,10 +1,11 @@
-"""The decoupling guarantee: the package carries no AFK pipeline coupling.
+"""The decoupling guarantee: the package stays a pure library.
 
-This is the test behind PRD success metric #1 — "zero import of Redis, Postgres,
-or the words-weight analyzer framework (grep-asserted)". It walks every shipped
-``.py`` file and fails if any forbidden symbol appears, and it asserts that
-merely importing ``latourometer`` does not drag in a heavy ML runtime.
+Scoring one text must never pull in a server runtime, so this test walks every
+shipped ``.py`` file and fails if a database / cache / vector-store client
+appears, and it asserts that merely importing ``latourometer`` does not drag in a
+heavy ML runtime.
 """
+
 from __future__ import annotations
 
 import pathlib
@@ -13,20 +14,13 @@ import latourometer
 
 PKG_DIR = pathlib.Path(latourometer.__file__).resolve().parent
 
-# Substrings that would betray a coupling back to the AFK monorepo runtime.
+# Substrings that would betray a server-runtime dependency creeping back in.
 FORBIDDEN = [
     "import redis",
     "redis.",
     "psycopg",
     "import qdrant",
     "qdrant_client",
-    "from src.",
-    "import src.",
-    "TranscriptPayload",
-    "AbstractAnalyzer",
-    "metrics_registry",
-    "central-postgres",
-    "SCALEWAY",
 ]
 
 

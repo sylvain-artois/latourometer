@@ -10,14 +10,10 @@ audit-flag helpers (``seed_pool`` / ``role_of`` / ``ROLE_INVERSION_HOLD``).
 Two layers of test:
 
 1. A self-contained **fixture** mirroring the on-disk frontmatter shape, so the
-   selection contract is asserted with no spaCy model and no samba mount.
-2. A **live-corpus** test that runs only inside the container (CORPUS_BASE_PATH
-   present + the corpus dir readable); it asserts the real seed counts
-   (HS↔T == 28, L↔G == 27) and Bruckner's placement.
-
-Run inside the container:
-
-    docker compose run --rm corpus-builder python -m pytest tests/ -q
+   selection contract is asserted with no spaCy model and no corpus mount.
+2. A **live-corpus** test that runs only when ``CORPUS_BASE_PATH`` is set and the
+   corpus dir is readable; it asserts the real seed counts (HS↔T == 28,
+   L↔G == 27) and Bruckner's placement.
 """
 
 import textwrap
@@ -25,13 +21,17 @@ from pathlib import Path
 
 import pytest
 
-from latourometer.baselines._corpus_loader import ROLE_INVERSION_HOLD, role_of, seed_pool
+from latourometer.baselines._corpus_loader import (
+    ROLE_INVERSION_HOLD,
+    role_of,
+    seed_pool,
+)
 from latourometer.baselines.calibrate import load_axis_corpus
 
 _BRUCKNER = "inversion_hors-sol_001_pascal-bruckner_greta-thunberg-ou-la"
 
 
-# --- Layer 1: fixture (no spaCy, no samba) ---------------------------------
+# --- Layer 1: fixture (no spaCy, no corpus mount) --------------------------
 
 
 def _write(dirpath: Path, slug: str, attracteur, role, use_for_seeds: bool):
@@ -84,7 +84,9 @@ def test_fixture_bruckner_is_an_inversion_hold(mini_corpus):
 
 def test_fixture_load_axis_corpus_routes_bruckner_to_excluded(mini_corpus, monkeypatch):
     # Point load_axis_corpus at the fixture by patching corpus_dir.
-    monkeypatch.setattr("latourometer.baselines.calibrate.corpus_dir", lambda: mini_corpus)
+    monkeypatch.setattr(
+        "latourometer.baselines.calibrate.corpus_dir", lambda: mini_corpus
+    )
     kept, excluded = load_axis_corpus("hors-sol-terrestre")
     kept_slugs = {e["slug"] for e in kept}
     assert _BRUCKNER not in kept_slugs  # not in the seed basin

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Regenerate the Wordscores + Wordfish baseline comparison table from the tiny
-# synthetic fixture corpus — fully offline, no samba mount, no license-gated
-# prose. Outputs land under $CORPUS_BASE_PATH/axes and .../calibration_latourometre.
+# Regenerate the Wordscores baseline comparison table from the tiny synthetic
+# fixture corpus — fully offline, no corpus mount, no license-gated prose.
+# Outputs land under $CORPUS_BASE_PATH/axes.
 #
 #   pip install -e ".[baselines]"
 #   python -m spacy download fr_core_news_lg
@@ -22,11 +22,6 @@ python -m latourometer.baselines.calibrate --axis local-global --min-docs-per-po
 echo "== Wordscores: score texts + build the comparison report =="
 python -m latourometer.baselines.compare --axis hors-sol-terrestre
 
-echo "== Wordfish: unsupervised positional scaling (both axes) =="
-python -m latourometer.baselines.wordfish --min-doc-freq 1
-
 echo
 echo "Done. See:"
 echo "  $CORPUS_BASE_PATH/axes/hors-sol-terrestre/comparison-report.md"
-echo "  $CORPUS_BASE_PATH/calibration_latourometre/baselines_20260625/wordfish/wordfish-report.md"
-echo "  $CORPUS_BASE_PATH/calibration_latourometre/baselines_20260625/comparison.md"

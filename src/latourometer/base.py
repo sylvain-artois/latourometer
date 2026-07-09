@@ -1,10 +1,7 @@
-"""Minimal, dependency-free analysis primitives for the standalone Latouromètre.
+"""Minimal, dependency-free analysis primitives for the Latouromètre.
 
-This is the decoupling layer. In the AFK ``words-weight`` production service the
-metrics receive an ``AnalysisContext`` wired to Redis/Postgres, a transcript
-payload and a pipeline orchestrator. None of that is needed to *score one
-text*, so this module re-implements only the two primitives the metric code
-actually touches:
+Scoring one text needs only two small primitives, and this module defines both
+with no server runtime, database client, or orchestrator behind them:
 
 * :class:`AbstractMetric` — a metric is an object with ``options`` and a
   ``compute(ctx)`` method returning a JSON-serialisable dict.
@@ -13,15 +10,15 @@ actually touches:
   ``project_root`` to resolve the packaged YAML config, and ``metrics_so_far``
   so the Latouromètre can blend the stance metric that ran before it.
 
-There is **no** import of Redis, Postgres, the analyzer registry, or the
-production transcript-payload type here — that absence is what makes the
-package publicly runnable, and it is asserted by ``tests/test_decoupling.py``.
+Keeping this layer free of Redis, Postgres, and any analyzer registry is what
+makes the package a self-contained library; ``tests/test_decoupling.py`` guards
+that property.
 
-``_segment_answer`` is carried over verbatim from the production ``base.py`` so
-that ``score(text)`` segments a text byte-for-byte the way the prod pipeline
-segments a single transcript answer — which is what lets the standalone output
-reproduce the production metric within float tolerance.
+``_segment_answer`` splits an input text into the same analysis segments the
+scorer was calibrated on, so ``score(text)`` and the calibration figures agree
+within float tolerance.
 """
+
 from __future__ import annotations
 
 import re
@@ -88,9 +85,7 @@ def _segment_answer(nlp, text: str) -> Tuple[List[Any], str]:
         return [nlp(p) for p in paragraphs], "paragraphs"
 
     if len(paragraphs) < _MIN_PARAGRAPHS and len(text) > _DEGRADED_OCR_MIN_CHARS:
-        single_nl = [
-            p.strip() for p in _SINGLE_NEWLINE_SEP.split(text) if p.strip()
-        ]
+        single_nl = [p.strip() for p in _SINGLE_NEWLINE_SEP.split(text) if p.strip()]
         if len(single_nl) >= _MIN_PARAGRAPHS:
             return [nlp(p) for p in single_nl], "single_newline"
 

@@ -1,9 +1,10 @@
 """``latourometer`` command-line entrypoint: score text on Latour's four poles.
 
-    latourometer "Nous croyons en la croissance technologique illimitée."
-    latourometer --file speech.txt --json
-    cat speech.txt | latourometer
+latourometer "Nous croyons en la croissance technologique illimitée."
+latourometer --file speech.txt --json
+cat speech.txt | latourometer
 """
+
 from __future__ import annotations
 
 import argparse
@@ -24,7 +25,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         nargs="?",
         help="text to score (omit to read from --file or stdin)",
     )
-    parser.add_argument("--file", type=str, default=None, help="read text from this file")
+    parser.add_argument(
+        "--file", type=str, default=None, help="read text from this file"
+    )
     parser.add_argument(
         "--gamma",
         type=float,
@@ -36,7 +39,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help="skip the NLI stance layer (faster; pure cosine SemAxis projection)",
     )
-    parser.add_argument("--json", action="store_true", help="emit the full metric dict as JSON")
+    parser.add_argument(
+        "--json", action="store_true", help="emit the full metric dict as JSON"
+    )
     args = parser.parse_args(argv)
 
     if args.file:

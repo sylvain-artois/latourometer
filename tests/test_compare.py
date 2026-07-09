@@ -1,17 +1,15 @@
-"""Unit tests for the Wordscores comparison core (STORY-185).
+"""Unit tests for the Wordscores comparison core.
 
 These exercise the pure scoring + grading math only -- no spaCy model and no
-corpus volume are needed. Run inside the container:
-
-    docker compose run --rm corpus-builder python -m pytest tests/ -q
+corpus are needed, so they run in the bare test session.
 """
 
 from latourometer.baselines.compare import (
     ScoredText,
+    _inversion_table,
     accuracy,
     axis_score,
     headtohead,
-    _inversion_table,
     load_latourometre_preds,
     load_lexicon,
     predict_pole,
@@ -58,7 +56,17 @@ def test_predict_pole_honours_axis_specific_pole_labels():
 
 def test_scoredtext_uses_its_own_axis_poles():
     # A global-gold hold-out text on the local-global axis, predicted global.
-    r = ScoredText("g", "holdout", "global", True, 0.6, 10, 50, pole_minus="local", pole_plus="global")
+    r = ScoredText(
+        "g",
+        "holdout",
+        "global",
+        True,
+        0.6,
+        10,
+        50,
+        pole_minus="local",
+        pole_plus="global",
+    )
     assert r.predicted_pole == "global"
     assert r.correct is True
 
@@ -96,7 +104,9 @@ def test_accuracy_counts_only_gradable_seeds():
 def test_inversion_table_grades_on_axis_and_skips_off_axis():
     rows = [
         # Damasio: gold terrestre, lexicon flips him to hors_sol -> misclassified.
-        ScoredText("terrestre011_damasio", "inversion", "terrestre", True, -0.3, 12, 80),
+        ScoredText(
+            "terrestre011_damasio", "inversion", "terrestre", True, -0.3, 12, 80
+        ),
         # Fink: gold hors_sol, lexicon reads sustainability words -> terrestre.
         ScoredText("horssol009_fink", "inversion", "hors_sol", True, 0.4, 15, 90),
         # Brunel: gold local (off-axis) -> reported, not graded.
@@ -115,7 +125,9 @@ def test_accuracy_separates_in_sample_seeds_from_out_of_sample_holdout():
         ScoredText("s2", "seed", "terrestre", True, -0.1, 10, 50),  # in-sample, wrong
         ScoredText("h1", "holdout", "hors_sol", True, -0.4, 10, 50),  # OOS, correct
         ScoredText("h2", "holdout", "terrestre", True, 0.2, 10, 50),  # OOS, correct
-        ScoredText("h3", "holdout", "global", False, -0.3, 10, 50),  # OOS off-axis, ungraded
+        ScoredText(
+            "h3", "holdout", "global", False, -0.3, 10, 50
+        ),  # OOS off-axis, ungraded
         ScoredText("h4", "holdout", None, False, 0.1, 10, 50),  # OOS no gold, ungraded
     ]
     assert accuracy(rows, "seed") == (1, 2)
@@ -144,7 +156,8 @@ def test_load_latourometre_preds_reads_predicted_pole(tmp_path):
         '{"slug": "foo", "predicted_pole": "terrestre", "scores": {}}', encoding="utf-8"
     )
     (tmp_path / "bar.latourometre.json").write_text(
-        '{"slug": "bar", "predicted_pole": null}', encoding="utf-8"  # null pred -> skipped
+        '{"slug": "bar", "predicted_pole": null}',
+        encoding="utf-8",  # null pred -> skipped
     )
     preds = load_latourometre_preds(tmp_path)
     assert preds == {"foo": "terrestre"}

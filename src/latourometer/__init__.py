@@ -8,6 +8,7 @@
 The heavy models (CamemBERT embedder, distilCamemBERT NLI) load lazily on the
 first ``score()`` call and are cached for the process lifetime.
 """
+
 from __future__ import annotations
 
 from .score import score

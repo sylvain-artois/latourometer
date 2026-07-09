@@ -8,21 +8,18 @@ Covers two methodological-hardening features added to the comparison scorer:
     alternative to the bounded LBG ``S(w)`` mean.
 
 All math is hand-computable from a 4-word fixture; no spaCy model and no corpus
-volume are needed. Run inside the container:
-
-    docker compose -f compose.yml run --rm corpus-builder python -m pytest -q
+are needed.
 """
 
 import math
 
 from latourometer.baselines.compare import (
-    ScoredText,
     _LOWE_ALPHA,
+    ScoredText,
     axis_score,
     bootstrap_text_ci,
     compute_lowe_scores,
 )
-
 
 # --- LBG fixture: known S(w), used for axis_score + sign_robust ---------------
 

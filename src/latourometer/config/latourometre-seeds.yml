@@ -1,6 +1,6 @@
 # Latouromètre seeds — four attractors from Bruno Latour, Où atterrir? (2017).
 #
-# v4 (2026-06-11) — extended against the 39-text corpus (PRD 2, Part 2).
+# v4 (2026-06-11) — extended against the 39-text corpus.
 # v3 generalised to 34/39 (0.872 [0.769, 0.974]) on the extended corpus; the
 # new failures split into two register gaps that seeds can close and three
 # Pattern-D / stance-inverted cases left to the NLI stance head:
@@ -16,8 +16,6 @@
 # NOT chased with seeds (documented Pattern-D ceiling, would overfit):
 #   Karp (cosine peaks hors_sol, global stance flips it), Bruckner (anti-Greta
 #   stance inversion), Damasio (writes ABOUT techno-capitalism to oppose it).
-# Methodology and iteration history in
-# words-weight/docs/building_latourometre.md (section "Calibration v4").
 #
 # v3 (2026-05-01) — extended against a 21-text labelled corpus to cover the
 # two sub-poles missed by v2:
@@ -30,10 +28,10 @@
 # v2 (2026-04-24) — calibrated against the original 17-text labelled corpus.
 # Validation run: run_003_20260424_seeds-hybrid-v2 — 17/17 accuracy.
 #
-# Key order matters: the LatouromètreChart reads this dict in order and maps
+# Key order matters: downstream chart code reads this dict in order and maps
 # the four poles to the cardinal angles of the polar chart (top, right,
 # bottom, left) to reproduce Latour's Figure 4 geometry. Do not reorder
-# without also updating the chart layout assumptions (EXPECTED_POLE_ORDER).
+# without also updating any chart layout that assumes this pole order.
 
 poles:
   terrestre:

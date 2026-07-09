@@ -32,8 +32,9 @@ correction without a uniform constant, then clips negatives and
 renormalises to sum to 1: ``blended[P] = max(0, cos[P] + γ·stance[P]) /
 Σ_P max(0, …)``. This preserves the cosine sharpness on neutral-stance
 texts (γ·0 = 0 → cosine pass-through) and yields decisive flips on
-stance inversions. See ``docs/building_latourometre.md`` § Phase E.
+stance inversions.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -45,7 +46,6 @@ from ..base import AbstractMetric, AnalysisContext
 from .thematic_radar import (
     DEFAULT_SOFTMAX_TAU,
     _chunk_doc,
-    _cosine,
     _softmax_aggregate,
 )
 
@@ -96,8 +96,8 @@ def _blend_gamma(
     strongly negative on pole P, ``cos[P] + γ·stance[P]`` can go below
     zero and gets clipped, effectively suppressing P — which is what we
     want on stance-inversion texts (Bruckner anti-Greta, Butré anti-
-    éolien). γ = 1.0 is the calibrated default; see PRD and the offline
-    sweep summarised in ``docs/building_latourometre.md`` § Phase E.
+    éolien). γ = 1.0 is the calibrated default, chosen by an offline sweep
+    over the labelled calibration corpus.
     """
     raw: Dict[str, float] = {}
     for key, cos in cosine_scores.items():
@@ -153,9 +153,7 @@ class LatourometreMetric(AbstractMetric):
             chunk_embs = np.asarray(chunk_embs)
 
         tau = float(self.options.get("softmax_tau", DEFAULT_SOFTMAX_TAU))
-        cosine_scores = _softmax_aggregate(
-            chunk_embs, pole_vectors, pole_keys, tau
-        )
+        cosine_scores = _softmax_aggregate(chunk_embs, pole_vectors, pole_keys, tau)
 
         return self._maybe_blend(cosine_scores, ctx, labels, pole_keys)
 
@@ -196,7 +194,11 @@ class LatourometreMetric(AbstractMetric):
             stance_payload.get("error") if isinstance(stance_payload, dict) else None
         )
 
-        if (gamma_opt is None and alpha_opt is None) or stance_scores is None or stance_error:
+        if (
+            (gamma_opt is None and alpha_opt is None)
+            or stance_scores is None
+            or stance_error
+        ):
             # Pure-cosine path. Surface the cosine values under the canonical
             # `scores` key so the chart consumes them transparently.
             return result

@@ -6,9 +6,9 @@ present these tests:
 
 * assert the four-pole contract (keys, blended + raw scores, dominant pole);
 * freeze a golden output (``golden_score.json``) and check ``score()`` keeps
-  reproducing it within float tolerance — the standing regression behind PRD
-  success metric #2 (the extracted core reproduces the prod metric's numbers).
+  reproducing it within float tolerance — the standing calibration regression.
 """
+
 from __future__ import annotations
 
 import json

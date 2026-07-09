@@ -1,10 +1,7 @@
-"""Unit tests for the Wordscores core (STORY-183).
+"""Unit tests for the Wordscores core.
 
-These exercise the pure scoring math only -- no spaCy model and no corpus
-volume are needed, so they run anywhere ``pyarrow`` + ``pydantic`` are present.
-Run inside the container:
-
-    docker compose run --rm corpus-builder python -m pytest tests/ -q
+These exercise the pure scoring math only -- no spaCy model and no corpus are
+needed, so they run anywhere ``pyarrow`` + ``pydantic`` are present.
 """
 
 from collections import Counter
@@ -41,7 +38,10 @@ def test_build_rows_freq_columns_follow_the_axis_poles():
     }
     scores = compute_wordscores(pole_counts, AXIS_REF_SCORE["local-global"])
     doc_freq = Counter({("terroir", "NOUN"): 1, ("marché", "NOUN"): 2})
-    rows = {(r.word, r.pos): r for r in build_rows(scores, pole_counts, doc_freq, poles=("local", "global"))}
+    rows = {
+        (r.word, r.pos): r
+        for r in build_rows(scores, pole_counts, doc_freq, poles=("local", "global"))
+    }
     # freq_minus is the -1 pole (local), freq_plus the +1 pole (global).
     assert rows[("terroir", "NOUN")].freq_minus == 3
     assert rows[("terroir", "NOUN")].freq_plus == 0
@@ -52,10 +52,22 @@ def _toy_docs():
     sol=5 (>= 3 -> CI)."""
     return [
         {"slug": "h1", "pole": "hors_sol", "counts": Counter({("marche", "NOUN"): 2})},
-        {"slug": "h2", "pole": "hors_sol", "counts": Counter({("marche", "NOUN"): 1, ("sol", "NOUN"): 1})},
+        {
+            "slug": "h2",
+            "pole": "hors_sol",
+            "counts": Counter({("marche", "NOUN"): 1, ("sol", "NOUN"): 1}),
+        },
         {"slug": "h3", "pole": "hors_sol", "counts": Counter({("sol", "NOUN"): 1})},
-        {"slug": "t1", "pole": "terrestre", "counts": Counter({("terre", "NOUN"): 2, ("sol", "NOUN"): 1})},
-        {"slug": "t2", "pole": "terrestre", "counts": Counter({("terre", "NOUN"): 1, ("sol", "NOUN"): 1})},
+        {
+            "slug": "t1",
+            "pole": "terrestre",
+            "counts": Counter({("terre", "NOUN"): 2, ("sol", "NOUN"): 1}),
+        },
+        {
+            "slug": "t2",
+            "pole": "terrestre",
+            "counts": Counter({("terre", "NOUN"): 1, ("sol", "NOUN"): 1}),
+        },
         {"slug": "t3", "pole": "terrestre", "counts": Counter({("sol", "NOUN"): 1})},
     ]
 
@@ -122,12 +134,14 @@ def test_build_rows_carries_counts_and_null_cis():
     assert marche.ci_high is None
 
 
-# --- STORY-184: bootstrap CIs (Lowe 2008) ---------------------------------
+# --- bootstrap CIs (Lowe 2008) --------------------------------------------
 
 
 def test_bootstrap_only_scores_words_seen_in_3plus_docs():
     docs = _toy_docs()
-    cis = bootstrap_cis(docs, ("hors_sol", "terrestre"), _doc_freq(docs), n_resamples=200)
+    cis = bootstrap_cis(
+        docs, ("hors_sol", "terrestre"), _doc_freq(docs), n_resamples=200
+    )
 
     # "sol" is in 5 docs -> gets a CI; "marche"/"terre" are in 2 docs -> omitted.
     assert ("sol", "NOUN") in cis
@@ -154,7 +168,9 @@ def test_bootstrap_ci_low_le_high_and_brackets_a_pure_pole_word():
         {"slug": "t2", "pole": "terrestre", "counts": Counter({("terre", "NOUN"): 1})},
         {"slug": "t3", "pole": "terrestre", "counts": Counter({("terre", "NOUN"): 1})},
     ]
-    cis = bootstrap_cis(docs, ("hors_sol", "terrestre"), _doc_freq(docs), n_resamples=100)
+    cis = bootstrap_cis(
+        docs, ("hors_sol", "terrestre"), _doc_freq(docs), n_resamples=100
+    )
 
     lo, hi = cis[("terre", "NOUN")]
     assert lo <= hi

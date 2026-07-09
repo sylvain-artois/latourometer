@@ -1,5 +1,10 @@
 # Latouromètre
 
+[![CI](https://github.com/sartois/latourometer/actions/workflows/ci.yml/badge.svg)](https://github.com/sartois/latourometer/actions/workflows/ci.yml)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 Score a French political text on **Bruno Latour's two attractor axes** from
 *Où atterrir ?* (2017):
 
@@ -18,9 +23,9 @@ then **blends in a zero-shot NLI stance layer** so a text that *uses* a pole's
 vocabulary to *attack* it (a climate-denier writing dense ecological prose) is
 not misread as belonging to that pole.
 
-This is a standalone, dependency-light extraction of the metric that runs inside
-the [AFK](https://afk.live) observatory's editorial pipeline — repackaged so
-anyone can score a single text with no Redis, no Postgres, no pipeline runtime.
+It is a self-contained, dependency-light library: `pip install`, call `score()`,
+and place a single text on the two axes — no server, no database, no pipeline
+runtime.
 
 ## Install
 
@@ -42,7 +47,7 @@ from latourometer import score
 
 result = score("Nous devons habiter la Terre et composer avec le vivant.")
 print(result["dominant_pole"])   # 'terrestre'
-print(result["scores"])          # {'terrestre': 0.71, 'global': 0.1, 'hors_sol': 0.08, 'local': 0.11}
+print(result["scores"])          # {'terrestre': 0.79, 'global': 0.15, 'hors_sol': 0.06, 'local': 0.0}
 ```
 
 Or from the command line:
@@ -52,12 +57,11 @@ latourometer "Nous croyons en la croissance technologique illimitée."
 latourometer --file speech.txt --json
 ```
 
-`score()` returns the same structure as the production `metrics.json`
-`latourometre` block: the four-pole blended `scores`, the pre-blend
-`cosine_scores`, the NLI `stance_scores` (in `[-1, +1]`), and a convenience
-`dominant_pole`. Pass `use_stance=False` for the pure cosine projection (no NLI
-load), or `gamma=` to tune the additive stance blend (γ = 1.0 is the calibrated
-default).
+`score()` returns the `latourometre` block: the four-pole blended `scores`, the
+pre-blend `cosine_scores`, the NLI `stance_scores` (in `[-1, +1]`), and a
+convenience `dominant_pole`. Pass `use_stance=False` for the pure cosine
+projection (no NLI load), or `gamma=` to tune the additive stance blend (γ = 1.0
+and the softmax temperature τ = 0.03 are the calibrated defaults).
 
 ## Method
 
@@ -68,15 +72,15 @@ default).
 | **Additive-γ blend** | `blended[P] = max(0, cosine[P] + γ·stance[P])`, renormalised. Neutral stance passes the cosine through; a strong contra stance suppresses a pole. |
 
 The seed phrases and stance hypotheses live in
-[`src/latourometer/config/`](src/latourometer/config/). The metric and its
-calibration (seeds v4, γ = 1.0) are taken as-is from the AFK research line.
+[`src/latourometer/config/`](src/latourometer/config/), with the calibration
+(seeds v4, γ = 1.0, τ = 0.03) baked in as the defaults.
 
 ## Baselines & reproducible benchmark
 
-The repo also ships the **Wordscores** (Laver–Benoit–Garry 2003) and
-**Wordfish** (Slapin–Proksch 2008) lexical-scaling baselines and a benchmark
-that regenerates a method-comparison table — entirely offline, from a tiny
-synthetic CC0 fixture corpus (no license-gated prose):
+The repo also ships the **Wordscores** (Laver–Benoit–Garry 2003)
+lexical-scaling baseline and a benchmark that regenerates a method-comparison
+table — entirely offline, from a tiny synthetic CC0 fixture corpus (no
+license-gated prose):
 
 ```bash
 pip install -e ".[baselines]"
@@ -97,10 +101,16 @@ pip install -e ".[dev,baselines]"
 pytest
 ```
 
-`tests/test_decoupling.py` runs without any model and asserts the package
-carries no Redis / Postgres / pipeline coupling. The functional, golden and
-benchmark tests skip themselves when the models or the FR spaCy pipeline are not
-installed.
+`tests/test_decoupling.py` runs without any model and asserts the package stays
+a pure library — no server or database client creeps in, and a bare `import
+latourometer` never eagerly loads torch. The functional, golden and benchmark
+tests skip themselves when the models or the FR spaCy pipeline are not installed.
+
+## Contributing
+
+Bug reports, baselines, and calibration improvements are welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, the layered test suite, and
+the lint/format workflow.
 
 ## License
 

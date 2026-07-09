@@ -1,9 +1,8 @@
 # Latouromètre stance hypotheses — zero-shot NLI candidate labels per pole.
 #
-# Phase D (cf. words-weight/docs/building_latourometre.md, "Plan C1"):
-# the cosine-only Latouromètre cannot tell apart "this text endorses
+# The cosine-only Latouromètre cannot tell apart "this text endorses
 # pole P" from "this text uses P's lexicon to attack P". A zero-shot
-# NLI head (cmarkea/distilcamembert-base-nli, FR-only in v1) scores
+# NLI head (cmarkea/distilcamembert-base-nli, FR-only) scores
 # each chunk against pro / contra hypotheses below; the per-pole
 # stance ∈ [-1, +1] is then blended with the cosine projection.
 #
@@ -23,8 +22,7 @@
 # global → hors_sol → local maps to the cardinal angles of the polar
 # chart (top, right, bottom, left).
 #
-# v0 (2026-05-01) — initial draft, derived from PRD §3 and refined for
-# genericity.
+# v0 (2026-05-01) — initial draft, refined for genericity.
 # v0.1 (2026-05-01) — after smoke test on 8 corpus texts. Signs were
 # directionally correct on Pattern-D traps (Bruckner T=-0.172, Butré
 # T=-0.285) but amplitude too weak.
@@ -60,8 +58,6 @@
 # Karp is the techno-imperial branch of HS that genuinely activates
 # both HS and L stance hypotheses, so single-winner classification
 # legitimately disagrees with the corpus label).
-# Iterations tracked in building_latourometre.md and in
-# docs/phase-d-grid-search-results.md.
 
 poles:
   terrestre:

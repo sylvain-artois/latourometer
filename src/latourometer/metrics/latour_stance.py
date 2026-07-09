@@ -6,7 +6,7 @@ from "this text uses P's lexicon to attack P" — distributional similarity
 is blind to stance. Phase D adds an entailment-based scorer that measures,
 for each pole, *how well does the text entail this pro/contra claim?*
 
-Architecture (cf. building_latourometre.md, Plan C1):
+Architecture:
 
   per chunk c:
     nli(c, candidate_labels=[all hypotheses], multi_label=True)
@@ -35,6 +35,7 @@ Graceful by design: any failure path returns a zero-filled payload with
 an ``error`` field. The metric never raises, so the pipeline degrades to
 pure cosine when NLI is unavailable.
 """
+
 from __future__ import annotations
 
 import logging
@@ -93,7 +94,7 @@ class LatourStanceMetric(AbstractMetric):
         if not poles_cfg:
             return _empty_payload({}, error="hypotheses_empty", hypotheses_file=rel)
 
-        # FR only in v1 — see building_latourometre.md "Plan C1" decision.
+        # FR only: the hypotheses and the NLI head are French.
         if ctx.language != "fr":
             return _empty_payload(
                 poles_cfg, error="language_not_supported", hypotheses_file=rel
@@ -116,9 +117,7 @@ class LatourStanceMetric(AbstractMetric):
             all_chunks.extend(_chunk_doc(doc))
         all_chunks = [c for c in all_chunks if c.strip()]
         if not all_chunks:
-            return _empty_payload(
-                poles_cfg, error="empty_text", hypotheses_file=rel
-            )
+            return _empty_payload(poles_cfg, error="empty_text", hypotheses_file=rel)
 
         # Build the global candidate label list once. Tag each label with
         # its pole + polarity so we can route scores back without relying on
@@ -185,12 +184,8 @@ class LatourStanceMetric(AbstractMetric):
             for pole_key in pole_keys:
                 pro_hyps = hypotheses_by_pole[pole_key]["pro"]
                 con_hyps = hypotheses_by_pole[pole_key]["contra"]
-                pro_scores_this_chunk = [
-                    label_to_score.get(h, 0.0) for h in pro_hyps
-                ]
-                con_scores_this_chunk = [
-                    label_to_score.get(h, 0.0) for h in con_hyps
-                ]
+                pro_scores_this_chunk = [label_to_score.get(h, 0.0) for h in pro_hyps]
+                con_scores_this_chunk = [label_to_score.get(h, 0.0) for h in con_hyps]
                 chunk_pro_per_pole[pole_key].append(
                     max(pro_scores_this_chunk) if pro_scores_this_chunk else 0.0
                 )
@@ -209,12 +204,8 @@ class LatourStanceMetric(AbstractMetric):
         for pole_key in pole_keys:
             pro_per_chunk = chunk_pro_per_pole[pole_key]
             con_per_chunk = chunk_contra_per_pole[pole_key]
-            pro_mean = (
-                sum(pro_per_chunk) / len(pro_per_chunk) if pro_per_chunk else 0.0
-            )
-            con_mean = (
-                sum(con_per_chunk) / len(con_per_chunk) if con_per_chunk else 0.0
-            )
+            pro_mean = sum(pro_per_chunk) / len(pro_per_chunk) if pro_per_chunk else 0.0
+            con_mean = sum(con_per_chunk) / len(con_per_chunk) if con_per_chunk else 0.0
             stance = max(-1.0, min(1.0, pro_mean - con_mean))
             scores[pole_key] = stance
             details[pole_key] = {

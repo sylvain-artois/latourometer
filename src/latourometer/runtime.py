@@ -1,9 +1,9 @@
 """Lazy singletons for the heavy NLP dependencies (spaCy + embedder + NLI).
 
-Standalone, French-only port of the AFK ``words-weight`` runtime. It loads the
-exact same two models the production Latouromètre uses, so scores reproduce:
+French-only runtime. It loads the three models the Latouromètre was calibrated
+against, so scores stay reproducible:
 
-- embedder : ``dangvantuan/sentence-camembert-large`` (frozen by PRD-4 — no swap)
+- embedder : ``dangvantuan/sentence-camembert-large`` (frozen — no swap)
 - NLI head : ``cmarkea/distilcamembert-base-nli`` (zero-shot stance)
 - spaCy    : ``fr_core_news_lg`` (segmentation + sentence boundaries)
 
@@ -11,12 +11,11 @@ An STS-oriented French embedder keeps the cosine spread wide enough for the
 SemAxis projection; multilingual retrieval embedders (E5 / BGE) collapse cosines
 into a narrow band and kill the discriminance the metric relies on.
 
-This module is Redis/Postgres-free and imports nothing from the AFK monorepo —
-that is the whole point of the standalone extraction. The two ``AFK_*_DEVICE``
-env gates are carried over unchanged: they default to CPU (safe everywhere) and
+The two ``LATOUROMETER_*_DEVICE`` env gates default to CPU (safe everywhere) and
 opt a model onto CUDA when a GPU is free, which is the wall-time bottleneck for
 batch calibration.
 """
+
 from __future__ import annotations
 
 import logging
@@ -55,12 +54,13 @@ def get_spacy_nlp() -> Any:
 def _resolve_embedder_device() -> str:
     """Device string for the sentence embedder. Default ``"cpu"``.
 
-    ``AFK_EMBEDDER_DEVICE`` opts the embedder onto a CUDA device (e.g. ``"0"`` or
-    ``"cuda:0"``) for offline batch calibration, where the GPU is free and the
-    CPU embedder is the wall-time bottleneck. Falls back to CPU with a warning if
-    CUDA is requested but absent, so a stale env var never crashes a run.
+    ``LATOUROMETER_EMBEDDER_DEVICE`` opts the embedder onto a CUDA device (e.g.
+    ``"0"`` or ``"cuda:0"``) for offline batch calibration, where the GPU is free
+    and the CPU embedder is the wall-time bottleneck. Falls back to CPU with a
+    warning if CUDA is requested but absent, so a stale env var never crashes a
+    run.
     """
-    raw = os.environ.get("AFK_EMBEDDER_DEVICE")
+    raw = os.environ.get("LATOUROMETER_EMBEDDER_DEVICE")
     if raw is None or raw.strip() in ("", "-1", "cpu"):
         return "cpu"
     dev = raw.strip()
@@ -71,13 +71,13 @@ def _resolve_embedder_device() -> str:
 
         if not torch.cuda.is_available():
             logger.warning(
-                "AFK_EMBEDDER_DEVICE=%r requested but CUDA unavailable — using CPU",
+                "LATOUROMETER_EMBEDDER_DEVICE=%r requested but CUDA unavailable — using CPU",
                 raw,
             )
             return "cpu"
     except Exception:  # noqa: BLE001 — torch missing/broken → safe CPU fallback
         return "cpu"
-    logger.info("AFK_EMBEDDER_DEVICE override active: embedder on %s", dev)
+    logger.info("LATOUROMETER_EMBEDDER_DEVICE override active: embedder on %s", dev)
     return dev
 
 
@@ -102,17 +102,19 @@ def get_embedder() -> Any:
 def _resolve_nli_device() -> int:
     """Device for the NLI pipeline. Default ``-1`` (CPU).
 
-    ``AFK_NLI_DEVICE`` opts the zero-shot stance head onto a CUDA device (e.g.
-    ``"0"``) where NLI inference dominates CPU wall time. Falls back to CPU with
-    a warning if CUDA is requested but absent.
+    ``LATOUROMETER_NLI_DEVICE`` opts the zero-shot stance head onto a CUDA device
+    (e.g. ``"0"``) where NLI inference dominates CPU wall time. Falls back to CPU
+    with a warning if CUDA is requested but absent.
     """
-    raw = os.environ.get("AFK_NLI_DEVICE")
+    raw = os.environ.get("LATOUROMETER_NLI_DEVICE")
     if raw is None or raw.strip() in ("", "-1"):
         return -1
     try:
         dev = int(raw)
     except ValueError:
-        logger.warning("AFK_NLI_DEVICE=%r is not an int — falling back to CPU", raw)
+        logger.warning(
+            "LATOUROMETER_NLI_DEVICE=%r is not an int — falling back to CPU", raw
+        )
         return -1
     if dev < 0:
         return -1
@@ -121,12 +123,13 @@ def _resolve_nli_device() -> int:
 
         if not torch.cuda.is_available():
             logger.warning(
-                "AFK_NLI_DEVICE=%d requested but CUDA unavailable — using CPU", dev
+                "LATOUROMETER_NLI_DEVICE=%d requested but CUDA unavailable — using CPU",
+                dev,
             )
             return -1
     except Exception:  # noqa: BLE001 — torch missing/broken → safe CPU fallback
         return -1
-    logger.info("AFK_NLI_DEVICE override active: NLI on cuda:%d", dev)
+    logger.info("LATOUROMETER_NLI_DEVICE override active: NLI on cuda:%d", dev)
     return dev
 
 

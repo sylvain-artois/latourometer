@@ -1,9 +1,9 @@
 """Minimal schema for the Wordscores lexicon rows.
 
-Carried from the AFK ``corpus-builder`` service — only :class:`LexiconRow` is
-needed by the calibration baseline. The full corpus-ingestion schema
-(``DocumentMetadata`` / ``DocumentRow`` …) is not part of the standalone metric.
+Only :class:`LexiconRow` is needed by the calibration baseline — a single row of
+the emitted ``lexicon.csv`` / ``lexicon.parquet``.
 """
+
 from __future__ import annotations
 
 from typing import Optional

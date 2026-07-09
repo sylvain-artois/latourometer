@@ -1,7 +1,7 @@
-"""Tests for scripts/_stats.py — bootstrap CIs (PRD 2, Part 1)."""
+"""Tests for latourometer.stats — bootstrap confidence intervals."""
+
 from __future__ import annotations
 
-import numpy as np
 import pytest
 
 from latourometer.stats import (

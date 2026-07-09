@@ -1,7 +1,5 @@
 """Bootstrap confidence intervals for Latouromètre accuracy reporting.
 
-Part 1 of PRD ``2_latourometer-statistical-robustness-and-corpus-extension``.
-
 The calibration corpus (currently 39 texts) is treated as a *sample* of a
 hypothetical larger population of political texts. Resampling the per-text
 correctness vector with replacement and recomputing accuracy yields a
@@ -13,6 +11,7 @@ statistical resolution of the corpus.
 Pure-numpy, no I/O — the calibration scripts call these and serialize the
 returned dicts to ``accuracy_ci.json``.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Sequence
@@ -57,13 +56,16 @@ def bootstrap_accuracy_ci(
     n = arr.size
     if n == 0:
         return {
-            "point": 0.0, "mean": 0.0, "ci_lo": 0.0, "ci_hi": 0.0,
-            "n": 0, "n_iter": int(n_iter), "seed": int(seed),
+            "point": 0.0,
+            "mean": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "n": 0,
+            "n_iter": int(n_iter),
+            "seed": int(seed),
         }
     rng = np.random.default_rng(seed)
-    accs = np.array(
-        [arr[rng.integers(0, n, size=n)].mean() for _ in range(n_iter)]
-    )
+    accs = np.array([arr[rng.integers(0, n, size=n)].mean() for _ in range(n_iter)])
     return {
         "point": float(arr.mean()),
         "mean": float(accs.mean()),
@@ -102,15 +104,20 @@ def paired_bootstrap_diff_ci(
     b = _as_correct_array(correct_b)
     if a.size != b.size:
         raise ValueError(
-            f"paired bootstrap requires equal-length vectors, "
-            f"got {a.size} and {b.size}"
+            f"paired bootstrap requires equal-length vectors, got {a.size} and {b.size}"
         )
     n = a.size
     if n == 0:
         return {
-            "point_a": 0.0, "point_b": 0.0, "mean_diff": 0.0,
-            "ci_lo": 0.0, "ci_hi": 0.0, "inconclusive": True,
-            "n": 0, "n_iter": int(n_iter), "seed": int(seed),
+            "point_a": 0.0,
+            "point_b": 0.0,
+            "mean_diff": 0.0,
+            "ci_lo": 0.0,
+            "ci_hi": 0.0,
+            "inconclusive": True,
+            "n": 0,
+            "n_iter": int(n_iter),
+            "seed": int(seed),
         }
     rng = np.random.default_rng(seed)
     diffs = np.empty(n_iter, dtype=float)

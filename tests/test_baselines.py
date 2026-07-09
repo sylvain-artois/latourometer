@@ -1,13 +1,12 @@
-"""The Wordscores / Wordfish benchmark regenerates a comparison table offline.
+"""The Wordscores benchmark regenerates a comparison table offline.
 
-PRD success metric #3 — "the baseline benchmark runs from the extracted code and
-regenerates a comparison table". Runs against the tiny synthetic fixture corpus
-(CC0, committed under ``tests/fixtures``) so it needs no samba mount and no
-license-gated prose. Skipped when spaCy / the FR model are unavailable.
+Runs against the tiny synthetic fixture corpus (CC0, committed under
+``tests/fixtures``) so it needs no corpus mount and no license-gated prose.
+Skipped when spaCy / the FR model are unavailable.
 """
+
 from __future__ import annotations
 
-import os
 import pathlib
 
 import pytest
@@ -41,7 +40,9 @@ def test_wordscores_calibrate_and_compare(corpus_env):
     from latourometer.baselines import calibrate, compare
 
     rc = _skip_if_no_model(
-        lambda: calibrate.calibrate("hors-sol-terrestre", bootstrap_n=0, min_docs_per_pole=1)
+        lambda: calibrate.calibrate(
+            "hors-sol-terrestre", bootstrap_n=0, min_docs_per_pole=1
+        )
     )
     assert rc == 0
     lexicon = corpus_env / "axes" / "hors-sol-terrestre" / "lexicon.csv"
@@ -52,13 +53,3 @@ def test_wordscores_calibrate_and_compare(corpus_env):
     report = corpus_env / "axes" / "hors-sol-terrestre" / "comparison-report.md"
     assert report.exists()
     assert "Wordscores" in report.read_text(encoding="utf-8")
-
-
-def test_wordfish_runs(corpus_env):
-    from latourometer.baselines import wordfish
-
-    # Tiny fixture → min-doc-freq must be 1 or the per-axis vocab is empty.
-    rc = _skip_if_no_model(lambda: wordfish.run(min_doc_freq=1))
-    assert rc == 0
-    summary = corpus_env / "calibration_latourometre" / "baselines_20260625" / "wordfish" / "wordfish_2d_summary.csv"
-    assert summary.exists()

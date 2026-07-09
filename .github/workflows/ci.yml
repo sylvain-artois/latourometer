@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A new push to a branch cancels the previous, still-running CI for that branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & format (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install "ruff>=0.15"
+      - name: ruff check
+        run: ruff check .
+      - name: ruff format --check
+        run: ruff format --check .
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    # Force the HF / Transformers stack offline: the model-dependent tests
+    # (test_score, test_baselines) then skip themselves instead of pulling
+    # multi-GB checkpoints. The no-model suite — including test_decoupling,
+    # which asserts that importing the package drags in no heavy ML runtime —
+    # runs for real and gates every PR.
+    env:
+      HF_HUB_OFFLINE: "1"
+      TRANSFORMERS_OFFLINE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install CPU-only PyTorch
+        # torch is a core dependency; the default PyPI wheel is the multi-GB CUDA
+        # build. Pin the CPU index so CI installs the small wheel.
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install package (dev + baselines extras)
+        run: pip install -e ".[dev,baselines]"
+      - name: Run tests
+        run: pytest -v

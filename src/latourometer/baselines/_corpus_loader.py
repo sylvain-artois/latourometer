@@ -30,6 +30,7 @@ file. The ``attracteur`` field uses extended labels (``local+``, ``global-``,
 etc.); ``fold_pole`` maps them to the four canonical pole keys used by
 ``LatourometreChart`` and ``LatourometreMetric``.
 """
+
 from __future__ import annotations
 
 import logging
@@ -179,8 +180,8 @@ def load_corpus(corpus_dir: Path, *, require_pole: bool = True) -> List[Dict[str
     the default ``True`` preserves the strict legacy behaviour.
 
     NOTE: this is a deliberate non-recursive ``glob`` — never switch to
-    ``rglob`` or the pools get poisoned by ``_source_artifacts/`` and
-    ``_pre_license_backup_STORY182/``.
+    ``rglob`` or the pools get poisoned by nested ``_source_artifacts/`` and
+    backup subdirectories.
     """
     entries = []
     for path in sorted(Path(corpus_dir).glob("*.md")):
@@ -246,7 +247,7 @@ def eval_pool(root_dir) -> List[Dict[str, Any]]:
         for e in load_corpus(root_path, require_pole=False)
         if role_of(e) == ROLE_INVERSION_HOLD
     ]
-    assert all(
-        audit_block(e).get("use_for_seeds") is not True for e in pool
-    ), "eval_pool leak: an entry has use_for_seeds:true"
+    assert all(audit_block(e).get("use_for_seeds") is not True for e in pool), (
+        "eval_pool leak: an entry has use_for_seeds:true"
+    )
     return pool
