@@ -50,7 +50,7 @@ dev = ["pytest>=8", "ruff>=0.15"]
 latourometer = "latourometer.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/sartois/latourometer"
+Homepage = "https://github.com/sylvain-artois/latourometer"
 Dataset = "https://huggingface.co/datasets/DyePop/latourometer-corpus"
 
 [tool.ruff]
